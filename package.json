@@ -1,0 +1,25 @@
+{
+  "name": "com.prasanna.mobilesetup",
+  "version": "1.0.0",
+  "displayName": "Mobile Project Setup",
+  "description": "One-click automated setup for Unity mobile projects. Configures Android & iOS, URP, UI Toolkit, TextMeshPro, folder structure and build settings automatically.",
+  "unity": "2022.3",
+  "documentationUrl": "https://github.com/Prasannagaya3/com.prasanna.mobilesetup#readme",
+  "changelogUrl": "https://github.com/Prasannagaya3/com.prasanna.mobilesetup/blob/main/CHANGELOG.md",
+  "licensesUrl": "https://github.com/Prasannagaya3/com.prasanna.mobilesetup/blob/main/LICENSE",
+  "dependencies": {},
+  "keywords": [
+    "mobile",
+    "setup",
+    "android",
+    "ios",
+    "urp",
+    "automation",
+    "template",
+    "triogames"
+  ],
+  "author": {
+    "name": "Prasanna",
+    "url": "https://github.com/Prasannagaya3"
+  }
+}

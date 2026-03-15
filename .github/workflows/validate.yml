@@ -1,0 +1,114 @@
+name: Validate Package
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    name: Validate Package Structure
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── Checkout ────────────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── package.json ────────────────────────────────────────────────────────────
+      - name: Validate package.json exists
+        run: |
+          if [ ! -f "package.json" ]; then
+            echo "❌ package.json not found"
+            exit 1
+          fi
+          echo "✅ package.json found"
+
+      - name: Validate package.json fields
+        run: |
+          NAME=$(cat package.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('name',''))")
+          VERSION=$(cat package.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('version',''))")
+          UNITY=$(cat package.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('unity',''))")
+
+          echo "Package : $NAME"
+          echo "Version : $VERSION"
+          echo "Unity   : $UNITY"
+
+          if [ -z "$NAME" ] || [ -z "$VERSION" ] || [ -z "$UNITY" ]; then
+            echo "❌ package.json is missing required fields (name / version / unity)"
+            exit 1
+          fi
+          echo "✅ package.json fields valid"
+
+      # ── Required files ─────────────────────────────────────────────────────────
+      - name: Check required files
+        run: |
+          FILES=(
+            "README.md"
+            "CHANGELOG.md"
+            "LICENSE"
+            "Editor/com.prasanna.mobilesetup.Editor.asmdef"
+            "Editor/Core/SetupConfig.cs"
+            "Editor/Core/SetupStepBase.cs"
+            "Editor/Core/MobileSetupWizard.cs"
+            "Editor/Steps/Step01_PackageInstaller.cs"
+            "Editor/Steps/Step02_URPConfigurator.cs"
+            "Editor/Steps/Step03_AndroidConfigurator.cs"
+            "Editor/Steps/Step04_iOSConfigurator.cs"
+            "Editor/Steps/Step05_PlayerSettings.cs"
+            "Editor/Steps/Step06_FolderStructure.cs"
+            "Editor/Steps/Step07_SceneCreator.cs"
+            "Editor/Steps/Step08_UIToolkitSetup.cs"
+            "Editor/Steps/Step09_VCSSettings.cs"
+            "Editor/Steps/Step10_BuildOptimizer.cs"
+          )
+          MISSING=0
+          for f in "${FILES[@]}"; do
+            if [ ! -f "$f" ]; then
+              echo "❌ Missing: $f"
+              MISSING=$((MISSING + 1))
+            else
+              echo "✅ Found:   $f"
+            fi
+          done
+          if [ $MISSING -gt 0 ]; then
+            echo ""
+            echo "❌ $MISSING file(s) missing — see above."
+            exit 1
+          fi
+          echo ""
+          echo "✅ All required files present."
+
+      # ── C# syntax check (no Unity compile — just basic checks) ──────────────────
+      - name: Check C# files are non-empty
+        run: |
+          EMPTY=0
+          while IFS= read -r -d '' file; do
+            SIZE=$(wc -c < "$file")
+            if [ "$SIZE" -lt 50 ]; then
+              echo "❌ Suspiciously small C# file: $file ($SIZE bytes)"
+              EMPTY=$((EMPTY + 1))
+            fi
+          done < <(find Editor -name "*.cs" -print0)
+          if [ $EMPTY -gt 0 ]; then exit 1; fi
+          echo "✅ All C# files look valid."
+
+      # ── asmdef validation ───────────────────────────────────────────────────────
+      - name: Validate asmdef is Editor-only
+        run: |
+          PLATFORMS=$(cat Editor/com.prasanna.mobilesetup.Editor.asmdef \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('includePlatforms',''))")
+          if [[ "$PLATFORMS" != *"Editor"* ]]; then
+            echo "❌ asmdef does not restrict to Editor platform"
+            exit 1
+          fi
+          echo "✅ asmdef is Editor-only: $PLATFORMS"
+
+      # ── Summary ─────────────────────────────────────────────────────────────────
+      - name: Summary
+        run: |
+          echo ""
+          echo "════════════════════════════════════════"
+          echo "  ✅  com.prasanna.mobilesetup — VALID  "
+          echo "════════════════════════════════════════"
