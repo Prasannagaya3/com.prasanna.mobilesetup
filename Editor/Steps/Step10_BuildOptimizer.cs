@@ -27,9 +27,8 @@ namespace Prasanna.MobileSetup.Editor
         protected override void Run()
         {
             // ── Batching ──────────────────────────────────────────────────────────
-            // Unity 2022+: use SetBatchingForPlatform(group, staticBatching, dynamicBatching)
-            PlayerSettings.SetBatchingForPlatform(BuildTargetGroup.Android, 1, 1);
-            PlayerSettings.SetBatchingForPlatform(BuildTargetGroup.iOS,     1, 1);
+            // Unity has no stable public API for batching — use SerializedObject
+            SetBatching(true, true);
 
             // ── Auto Graphics API off — we set APIs explicitly ────────────────────
             PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android, false);
@@ -55,6 +54,24 @@ namespace Prasanna.MobileSetup.Editor
 
             Succeed("Static/Dynamic batching enabled. ASTC textures. IL2CPP Release. " +
                     "Auto Graphics API disabled. Build optimized for mobile ✓");
+        }
+
+        // ── Helpers ───────────────────────────────────────────────────────────────
+
+        private static void SetBatching(bool staticBatching, bool dynamicBatching)
+        {
+            var assets = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/ProjectSettings.asset");
+            if (assets == null || assets.Length == 0) return;
+
+            var so = new SerializedObject(assets[0]);
+
+            var staticProp  = so.FindProperty("staticBatching");
+            var dynamicProp = so.FindProperty("dynamicBatching");
+
+            if (staticProp  != null) staticProp.intValue  = staticBatching  ? 1 : 0;
+            if (dynamicProp != null) dynamicProp.intValue = dynamicBatching ? 1 : 0;
+
+            so.ApplyModifiedProperties();
         }
     }
 }
