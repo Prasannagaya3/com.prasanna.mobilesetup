@@ -38,23 +38,9 @@ namespace Prasanna.MobileSetup.Editor
             // ── Minimum iOS Version ───────────────────────────────────────────────
             PlayerSettings.iOS.targetOSVersionString = SetupConfig.iOSMinVersion;
 
-            // ── Graphics API: Metal only ──────────────────────────────────────────
-            // Metal is only configurable when the iOS Build Support module is installed.
-            // We check by attempting to get the current APIs — if the list contains
-            // Metal already (module installed) we set explicitly; otherwise we leave
-            // Auto Graphics API enabled so Unity picks the correct default.
-            var currentApis = PlayerSettings.GetGraphicsAPIs(BuildTarget.iOS);
-            bool iosModuleInstalled = currentApis != null && currentApis.Length > 0;
-
-            if (iosModuleInstalled)
-            {
-                PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.iOS, false);
-                PlayerSettings.SetGraphicsAPIs(BuildTarget.iOS, new[]
-                {
-                    GraphicsDeviceType.Metal,
-                });
-            }
-            // On Windows without iOS module: leave Auto Graphics API enabled (no warning)
+            // ── Graphics API ──────────────────────────────────────────────────────
+            // Metal is the only graphics API on iOS and Unity uses it by default.
+            // No need to set it explicitly — Auto Graphics API is correct for iOS.
 
             // ── Multithreaded Rendering ───────────────────────────────────────────
             PlayerSettings.SetMobileMTRendering(BuildTargetGroup.iOS, true);

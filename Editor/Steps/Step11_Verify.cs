@@ -133,10 +133,8 @@ namespace Prasanna.MobileSetup.Editor
             Check($"iOS: Min version >= {SetupConfig.iOSMinVersion}",
                 !string.IsNullOrEmpty(minVer) && minVer != "7.0", minVer);
 
-            var apis = PlayerSettings.GetGraphicsAPIs(BuildTarget.iOS);
-            bool hasMetal = System.Array.Exists(apis,
-                a => a == GraphicsDeviceType.Metal);
-            Check("iOS: Metal in Graphics APIs", hasMetal, string.Join(", ", apis));
+            // Metal is iOS default — Auto Graphics API is intentionally left enabled.
+            // No explicit check needed here.
         }
 
         private void CheckPlayerSettings()
