@@ -64,6 +64,7 @@ namespace Prasanna.MobileSetup.Editor
             new Step08_UIToolkitSetup(),
             new Step09_VCSSettings(),
             new Step10_BuildOptimizer(),
+            new Step11_Verify(),
         };
 
         // ── Drawing ───────────────────────────────────────────────────────────────
@@ -163,6 +164,13 @@ namespace Prasanna.MobileSetup.Editor
 
             EditorGUILayout.Space(4);
 
+            if (GUILayout.Button("  🔍  Verify Settings Only", GUILayout.Height(28)))
+            {
+                RunVerifyOnly();
+            }
+
+            EditorGUILayout.Space(4);
+
             if (GUILayout.Button("Reset Setup State", EditorStyles.miniButton))
             {
                 EditorPrefs.DeleteKey(SetupConfig.SetupCompletedKey);
@@ -172,6 +180,26 @@ namespace Prasanna.MobileSetup.Editor
 
             EditorGUI.EndDisabledGroup();
             EditorGUILayout.Space(8);
+        }
+
+        private void RunVerifyOnly()
+        {
+            _isRunning = true;
+            var verifyStep = new Step11_Verify();
+
+            EditorUtility.DisplayProgressBar("Verifying Setup…", "Running all checks…", 0.5f);
+            verifyStep.Execute();
+            EditorUtility.ClearProgressBar();
+
+            _isRunning = false;
+
+            string msg = verifyStep.Status == StepStatus.Success
+                ? "✅ All checks passed!\n\nSee the Console window for the full detailed report."
+                : $"⚠️ Some checks failed.\n\n{verifyStep.StatusLog}\n\nSee the Console window for the full detailed report.";
+
+            EditorUtility.DisplayDialog("Verification Report", msg, "Open Console");
+            EditorApplication.ExecuteMenuItem("Window/General/Console");
+            Repaint();
         }
 
         // ── Execution ─────────────────────────────────────────────────────────────

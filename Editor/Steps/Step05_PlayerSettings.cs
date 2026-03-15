@@ -8,7 +8,7 @@ namespace Prasanna.MobileSetup.Editor
     ///
     /// Applies platform-independent project settings:
     ///   · Linear color space
-    ///   · Both input systems active (Old + New)
+    ///   · New Input System only
     ///   · Portrait + Landscape orientation
     ///   · IL2CPP managed code stripping (Medium)
     ///   · Strip Engine Code enabled
@@ -18,7 +18,7 @@ namespace Prasanna.MobileSetup.Editor
         public Step05_PlayerSettings()
         {
             Name        = "Global Player Settings";
-            Description = "Sets color space (Linear), input handling (Both), " +
+            Description = "Sets color space (Linear), input handling (New Input System only), " +
                           "orientation, and managed code stripping.";
         }
 
@@ -34,16 +34,16 @@ namespace Prasanna.MobileSetup.Editor
             PlayerSettings.allowedAutorotateToLandscapeRight = true;
             PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;
 
-            // ── Active Input Handling: Both (0=Old, 1=New, 2=Both) ────────────────
+            // ── Active Input Handling: New Input System only (0=Old, 1=New, 2=Both) ─
             // Unity doesn't expose a direct setter for this — use SerializedObject.
-            SetActiveInputHandling(2);
+            SetActiveInputHandling(1);
 
             // ── Code Stripping ────────────────────────────────────────────────────
             PlayerSettings.stripEngineCode = true;
             PlayerSettings.SetManagedStrippingLevel(BuildTargetGroup.Android, ManagedStrippingLevel.Medium);
             PlayerSettings.SetManagedStrippingLevel(BuildTargetGroup.iOS,     ManagedStrippingLevel.Medium);
 
-            Succeed("Color space: Linear. Input: Both. Stripping: Medium. Orientation: Portrait + Landscape.");
+            Succeed("Color space: Linear. Input: New Input System only. Stripping: Medium. Orientation: Portrait + Landscape.");
         }
 
         // ── Helpers ───────────────────────────────────────────────────────────────

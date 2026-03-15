@@ -66,8 +66,16 @@ namespace Prasanna.MobileSetup.Editor
 
             EditorUtility.SetDirty(Unsupported.GetSerializedAssetInterfaceSingleton("PlayerSettings"));
 
+            // ── Switch Active Build Target to Android ─────────────────────────────
+            // This triggers a domain reload — it runs last so all settings are saved first.
+            if (EditorUserBuildSettings.activeBuildTarget != BuildTarget.Android)
+            {
+                EditorUserBuildSettings.SwitchActiveBuildTargetAsync(
+                    BuildTargetGroup.Android, BuildTarget.Android);
+            }
+
             Succeed($"Android configured. Bundle ID: {SetupConfig.AndroidBundleId}, " +
-                    $"Min SDK: {SetupConfig.AndroidMinSdkVersion}.");
+                    $"Min SDK: {SetupConfig.AndroidMinSdkVersion}. Active platform switched to Android.");
         }
     }
 }
