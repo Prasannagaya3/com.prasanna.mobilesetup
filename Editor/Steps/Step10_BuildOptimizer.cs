@@ -48,9 +48,9 @@ namespace Prasanna.MobileSetup.Editor
             EditorUserBuildSettings.androidBuildSubtarget = MobileTextureSubtarget.ASTC;
 
             // ── IL2CPP Compiler Configuration ────────────────────────────────────
-            // Release = full optimizations in production builds
+            // Android only — iOS IL2CPP config is set inside the generated Xcode project,
+            // not from Unity. Setting it here produces a warning on non-Mac machines.
             PlayerSettings.SetIl2CppCompilerConfiguration(BuildTargetGroup.Android, Il2CppCompilerConfiguration.Release);
-            PlayerSettings.SetIl2CppCompilerConfiguration(BuildTargetGroup.iOS,     Il2CppCompilerConfiguration.Release);
 
             Succeed("Static/Dynamic batching enabled. ASTC textures. IL2CPP Release. " +
                     "Auto Graphics API disabled. Build optimized for mobile ✓");

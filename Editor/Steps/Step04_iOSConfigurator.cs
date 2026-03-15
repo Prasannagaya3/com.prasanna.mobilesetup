@@ -38,12 +38,17 @@ namespace Prasanna.MobileSetup.Editor
             // ── Minimum iOS Version ───────────────────────────────────────────────
             PlayerSettings.iOS.targetOSVersionString = SetupConfig.iOSMinVersion;
 
-            // ── Graphics API: Metal only (Vulkan not supported on iOS) ────────────
-            PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.iOS, false);
-            PlayerSettings.SetGraphicsAPIs(BuildTarget.iOS, new[]
+            // ── Graphics API: Metal only ──────────────────────────────────────────
+            // Only applied if iOS Build Support module is installed.
+            // On Windows without iOS module, this call is silently skipped.
+            if (BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.iOS, BuildTarget.iOS))
             {
-                GraphicsDeviceType.Metal,
-            });
+                PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.iOS, false);
+                PlayerSettings.SetGraphicsAPIs(BuildTarget.iOS, new[]
+                {
+                    GraphicsDeviceType.Metal,
+                });
+            }
 
             // ── Multithreaded Rendering ───────────────────────────────────────────
             PlayerSettings.SetMobileMTRendering(BuildTargetGroup.iOS, true);
