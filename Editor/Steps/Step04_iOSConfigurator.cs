@@ -53,7 +53,7 @@ namespace Prasanna.MobileSetup.Editor
 
             // ── .NET API ──────────────────────────────────────────────────────────
             PlayerSettings.SetApiCompatibilityLevel(
-                BuildTargetGroup.iOS, ApiCompatibilityLevel.NET_Standard_2_1);
+                BuildTargetGroup.iOS, ApiCompatibilityLevel.NET_Standard);
 
             Succeed($"iOS configured. Bundle ID: {SetupConfig.iOSBundleId}, " +
                     $"Min version: iOS {SetupConfig.iOSMinVersion}.");

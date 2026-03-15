@@ -27,8 +27,9 @@ namespace Prasanna.MobileSetup.Editor
         protected override void Run()
         {
             // ── Batching ──────────────────────────────────────────────────────────
-            PlayerSettings.staticBatching  = true;
-            PlayerSettings.dynamicBatching = true;
+            // Unity 2022+: use SetBatchingForPlatform(group, staticBatching, dynamicBatching)
+            PlayerSettings.SetBatchingForPlatform(BuildTargetGroup.Android, 1, 1);
+            PlayerSettings.SetBatchingForPlatform(BuildTargetGroup.iOS,     1, 1);
 
             // ── Auto Graphics API off — we set APIs explicitly ────────────────────
             PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android, false);
@@ -43,9 +44,9 @@ namespace Prasanna.MobileSetup.Editor
             PlayerSettings.SetManagedStrippingLevel(BuildTargetGroup.Android, ManagedStrippingLevel.Medium);
             PlayerSettings.SetManagedStrippingLevel(BuildTargetGroup.iOS,     ManagedStrippingLevel.Medium);
 
-            // ── Texture Compression Quality ───────────────────────────────────────
-            // Normal = best balance for mobile
-            PlayerSettings.Android.textureCompressionFormat = MobileTextureSubtarget.ASTC;
+            // ── Texture Compression: ASTC ─────────────────────────────────────────
+            // Unity 2022+: textureCompressionFormat moved to EditorUserBuildSettings
+            EditorUserBuildSettings.androidBuildSubtarget = MobileTextureSubtarget.ASTC;
 
             // ── IL2CPP Compiler Configuration ────────────────────────────────────
             // Release = full optimizations in production builds

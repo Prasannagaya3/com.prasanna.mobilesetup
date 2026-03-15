@@ -62,7 +62,7 @@ namespace Prasanna.MobileSetup.Editor
 
             // ── .NET API ──────────────────────────────────────────────────────────
             PlayerSettings.SetApiCompatibilityLevel(
-                BuildTargetGroup.Android, ApiCompatibilityLevel.NET_Standard_2_1);
+                BuildTargetGroup.Android, ApiCompatibilityLevel.NET_Standard);
 
             EditorUtility.SetDirty(Unsupported.GetSerializedAssetInterfaceSingleton("PlayerSettings"));
 
