@@ -2,6 +2,9 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
+// URP types are only available after the URP package is installed.
+// The URP_INSTALLED define is set in the asmdef versionDefines once
+// com.unity.render-pipelines.universal >= 7.0.0 is present.
 #if URP_INSTALLED
 using UnityEngine.Rendering.Universal;
 #endif
