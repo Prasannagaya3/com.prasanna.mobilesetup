@@ -1,13 +1,8 @@
+using System;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
-
-// URP types are only available after the URP package is installed.
-// The URP_INSTALLED define is set in the asmdef versionDefines once
-// com.unity.render-pipelines.universal >= 7.0.0 is present.
-#if URP_INSTALLED
-using UnityEngine.Rendering.Universal;
-#endif
 
 namespace Prasanna.MobileSetup.Editor
 {
@@ -17,12 +12,16 @@ namespace Prasanna.MobileSetup.Editor
     /// Creates a UniversalRenderPipelineAsset and assigns it to both
     /// Graphics Settings and all Quality levels.
     ///
-    /// Requires the URP package (com.unity.render-pipelines.universal) to be
-    /// installed. If packages are still installing from Step 01, this step will
-    /// warn gracefully — re-run setup after Unity's domain reload.
+    /// Uses reflection so no hard assembly reference to URP is required.
+    /// Works whether URP was pre-installed or just added by Step 01.
     /// </summary>
     public class Step02_URPConfigurator : SetupStepBase
     {
+        // URP type names — stable across URP 10–17
+        private const string RendererDataTypeName    = "UnityEngine.Rendering.Universal.UniversalRendererData";
+        private const string PipelineAssetTypeName   = "UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset";
+        private const string CreateMethodName        = "Create";
+
         public Step02_URPConfigurator()
         {
             Name        = "URP Configurator";
@@ -31,66 +30,110 @@ namespace Prasanna.MobileSetup.Editor
 
         protected override void Run()
         {
-#if !URP_INSTALLED
-            Warn("URP package is not installed yet. " +
-                 "Wait for Unity to finish installing packages, then re-run setup.");
-#else
+            // ── Check URP is available via reflection ─────────────────────────────
+            Type pipelineAssetType = FindType(PipelineAssetTypeName);
+            Type rendererDataType  = FindType(RendererDataTypeName);
+
+            if (pipelineAssetType == null || rendererDataType == null)
+            {
+                Warn("URP package not found. Wait for Unity to finish installing packages, " +
+                     "then re-run setup.");
+                return;
+            }
+
             EnsureSettingsFolder();
 
-            var pipelineAsset = GetOrCreatePipelineAsset();
+            // ── Get or create Pipeline Asset ──────────────────────────────────────
+            var pipelineAsset = GetOrCreatePipelineAsset(pipelineAssetType, rendererDataType);
+            if (pipelineAsset == null)
+            {
+                Warn("Could not create URP Pipeline Asset. Re-run setup after Unity reloads.");
+                return;
+            }
 
-            // Assign to Graphics settings (global default)
+            // ── Assign to Graphics Settings ───────────────────────────────────────
             GraphicsSettings.defaultRenderPipeline = pipelineAsset;
-            EditorUtility.SetDirty(GraphicsSettings.defaultRenderPipeline);
 
-            // Assign to every Quality level
+            // ── Assign to all Quality levels ──────────────────────────────────────
             string[] qualityNames = QualitySettings.names;
             for (int i = 0; i < qualityNames.Length; i++)
             {
                 QualitySettings.SetQualityLevel(i, false);
                 QualitySettings.renderPipeline = pipelineAsset;
             }
-
-            // Restore to the first quality level
             QualitySettings.SetQualityLevel(0, false);
 
             AssetDatabase.SaveAssets();
             Succeed($"URP configured across {qualityNames.Length} quality level(s). " +
                     $"Asset: {SetupConfig.URPPipelineAssetPath}");
-#endif
         }
 
-#if URP_INSTALLED
-        private static UniversalRenderPipelineAsset GetOrCreatePipelineAsset()
+        // ── Helpers ───────────────────────────────────────────────────────────────
+
+        private static RenderPipelineAsset GetOrCreatePipelineAsset(
+            Type pipelineAssetType, Type rendererDataType)
         {
             // Return existing asset if already created
-            var existing = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(
-                SetupConfig.URPPipelineAssetPath);
+            var existing = AssetDatabase.LoadAssetAtPath(
+                SetupConfig.URPPipelineAssetPath, pipelineAssetType) as RenderPipelineAsset;
             if (existing != null) return existing;
 
-            // Create Universal Renderer Data
-            var rendererData = AssetDatabase.LoadAssetAtPath<UniversalRendererData>(
-                SetupConfig.URPRendererDataPath);
+            // Create renderer data
+            var rendererData = AssetDatabase.LoadAssetAtPath(
+                SetupConfig.URPRendererDataPath, rendererDataType) as ScriptableObject;
 
             if (rendererData == null)
             {
-                rendererData = ScriptableObject.CreateInstance<UniversalRendererData>();
+                rendererData = ScriptableObject.CreateInstance(rendererDataType);
                 AssetDatabase.CreateAsset(rendererData, SetupConfig.URPRendererDataPath);
             }
 
-            // Create Pipeline Asset using the renderer data
-            var pipelineAsset = UniversalRenderPipelineAsset.Create(rendererData);
+            // Call UniversalRenderPipelineAsset.Create(rendererData) via reflection
+            MethodInfo createMethod = pipelineAssetType.GetMethod(
+                CreateMethodName,
+                BindingFlags.Static | BindingFlags.Public,
+                null,
+                new[] { rendererDataType },
+                null);
+
+            if (createMethod == null)
+            {
+                // Fallback: try Create() with no arguments (older URP versions)
+                createMethod = pipelineAssetType.GetMethod(
+                    CreateMethodName,
+                    BindingFlags.Static | BindingFlags.Public);
+            }
+
+            if (createMethod == null) return null;
+
+            var pipelineAsset = createMethod.Invoke(null,
+                createMethod.GetParameters().Length == 1
+                    ? new object[] { rendererData }
+                    : null) as RenderPipelineAsset;
+
+            if (pipelineAsset == null) return null;
+
             AssetDatabase.CreateAsset(pipelineAsset, SetupConfig.URPPipelineAssetPath);
             AssetDatabase.SaveAssets();
 
             return pipelineAsset;
         }
-#endif
 
         private static void EnsureSettingsFolder()
         {
             if (!AssetDatabase.IsValidFolder("Assets/Settings"))
                 AssetDatabase.CreateFolder("Assets", "Settings");
+        }
+
+        /// <summary>Searches all loaded assemblies for a type by full name.</summary>
+        private static Type FindType(string fullTypeName)
+        {
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                var type = assembly.GetType(fullTypeName);
+                if (type != null) return type;
+            }
+            return null;
         }
     }
 }
